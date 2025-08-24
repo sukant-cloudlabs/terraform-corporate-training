@@ -1,27 +1,35 @@
+terraform {
+  cloud {
+    organization = "sukant-terraformlabs"
+    workspaces { name = "terraform-corporate-training" }
+  }
+
+  required_providers {
+    aws    = { source = "hashicorp/aws" }
+    random = { source = "hashicorp/random" }
+  }
+}
+
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+
 provider "aws" {
-  region = "us-east-1"
-}
-data "aws_ami" "app_ami" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["bitnami-tomcat-*-x86_64-hvm-ebs-nami"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["979382823631"] # Bitnami
+  region = var.aws_region
 }
 
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.app_ami.id
-  instance_type = "t3.micro"
+resource "random_id" "suffix" {
+  byte_length = 4
+}
 
+resource "aws_s3_bucket" "demo" {
+  bucket = "tfc-demo-${random_id.suffix.hex}"
   tags = {
-    Name = "HelloWorld"
+    Project = "TFC Demo"
   }
+}
+
+output "bucket_name" {
+  value = aws_s3_bucket.demo.bucket
 }
